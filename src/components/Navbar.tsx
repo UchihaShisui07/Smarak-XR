@@ -114,7 +114,9 @@ export const Navbar: React.FC<Props> = ({
           <button
             onClick={() => {
               triggerHaptic('tap');
-              soundEngine.playTempleBell(523, 1.5);
+              if (!isAudioPlaying) {
+                soundEngine.playTempleBell(523, 1.2);
+              }
               onToggleAudio();
             }}
             title={isAudioPlaying ? 'Mute Tanpura Drone' : 'Start Tanpura Drone'}

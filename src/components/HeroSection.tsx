@@ -97,7 +97,9 @@ export const HeroSection: React.FC<Props> = ({
           <button
             onClick={() => {
               triggerHaptic('tap');
-              soundEngine.playTempleBell(523, 1.5);
+              if (!isAudioPlaying) {
+                soundEngine.playTempleBell(523, 1.2);
+              }
               onToggleAudio();
             }}
             className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-semibold border transition-all cursor-pointer ${
