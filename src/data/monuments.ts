@@ -91,6 +91,9 @@ export const MONUMENTS: Monument[] = [
       aerialDesc: 'Breathtaking high-altitude vista of the Charbagh garden grid and the winding Yamuna river.',
       sanctumDesc: 'The tranquil marble octagonal chamber housing the cenotaphs surrounded by pierced jali screens.',
       courtyardDesc: 'The red sandstone Mehmankhana terrace framing the glowing marble façade.',
+      aerialImage: 'https://upload.wikimedia.org/wikipedia/commons/f/fb/Taj_Mahal_360%C2%B0_View.jpg',
+      sanctumImage: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=2000&q=80',
+      courtyardImage: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=2000&q=80',
     },
     visitTips: {
       bestTime: 'Sunrise (6:00 AM) to witness the rosy dawn glow with minimal crowds.',
@@ -189,6 +192,9 @@ export const MONUMENTS: Monument[] = [
       aerialDesc: 'Panoramic drone vantage looking down on the chariot wheel alignments facing the morning sunrise.',
       sanctumDesc: 'The inner assembly hall with massive corbelled stone roof and iron tie beams.',
       courtyardDesc: 'The pillared dance pavilion surrounded by stone celestial musicians (Apsaras) playing mridangam and cymbals.',
+      aerialImage: 'https://upload.wikimedia.org/wikipedia/commons/4/46/Sun_Temple_Main_Structure%2C_Konark%2C_Orissa.jpg',
+      sanctumImage: 'https://images.unsplash.com/photo-1609137144813-7d9921338f24?auto=format&fit=crop&w=2000&q=80',
+      courtyardImage: 'https://upload.wikimedia.org/wikipedia/commons/1/16/Wheel_engraved_in_the_13th_century_built_Konark_Sun_Temple_in_Orissa%2C_India.jpg',
     },
     visitTips: {
       bestTime: 'Early morning (6:00 AM - 8:30 AM) when the first rays of the sun strike the eastern facing wheels.',
@@ -287,6 +293,9 @@ export const MONUMENTS: Monument[] = [
       aerialDesc: 'Spectacular view of the four perimeter gopurams pointing to the cardinal directions.',
       sanctumDesc: 'The sacred golden Vimana over Goddess Meenakshi’s green-stone deity illuminated by flickering oil lamps.',
       courtyardDesc: 'The Thousand Pillar Hall echoing with nadaswaram flute music and temple bell chimes.',
+      aerialImage: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=2000&q=80',
+      sanctumImage: 'https://images.unsplash.com/photo-1621847468516-1ed5d0df56fe?auto=format&fit=crop&w=2000&q=80',
+      courtyardImage: 'https://images.unsplash.com/photo-1600100397608-f010e421d3f9?auto=format&fit=crop&w=2000&q=80',
     },
     visitTips: {
       bestTime: 'Evening (5:00 PM - 9:00 PM) to experience the night procession (Palliyarai Puja) of Lord Sundareswarar.',
@@ -385,6 +394,9 @@ export const MONUMENTS: Monument[] = [
       aerialDesc: 'Looking down into the 30-meter deep trench carved out of the Charanandri basalt hill.',
       sanctumDesc: 'The sanctum sanctorum housing the immense Shiva Linga carved directly out of the bedrock.',
       courtyardDesc: 'The two monolithic 15-meter victory flagstaff pillars framing the Nandi pavilion.',
+      aerialImage: 'https://upload.wikimedia.org/wikipedia/commons/2/26/Ellora_Kailash_temple_overview.jpg',
+      sanctumImage: 'https://images.unsplash.com/photo-1600100397858-69cb9bc0ecf2?auto=format&fit=crop&w=2000&q=80',
+      courtyardImage: 'https://images.unsplash.com/photo-1627894483216-2138af692e32?auto=format&fit=crop&w=2000&q=80',
     },
     visitTips: {
       bestTime: 'Morning hours (9:00 AM - 12:00 PM) when sunlight reaches deep into the west-facing rock trench.',
@@ -483,6 +495,9 @@ export const MONUMENTS: Monument[] = [
       aerialDesc: 'Looking across the bustling Johari Bazaar to the City Palace and Jantar Mantar observatory.',
       sanctumDesc: 'The delicate Ratan Mandir with stained glass arches throwing jewel-colored light.',
       courtyardDesc: 'The central fountain courtyard behind the facade where royal palanquins once arrived.',
+      aerialImage: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=2000&q=80',
+      sanctumImage: 'https://images.unsplash.com/photo-1609946850849-5f21bb9b0a1d?auto=format&fit=crop&w=2000&q=80',
+      courtyardImage: 'https://images.unsplash.com/photo-1605649487212-47bdab064df8?auto=format&fit=crop&w=2000&q=80',
     },
     visitTips: {
       bestTime: 'Early morning (7:30 AM) when the front facade catches the direct golden rays of the sunrise.',
@@ -581,6 +596,9 @@ export const MONUMENTS: Monument[] = [
       aerialDesc: 'Sweeping view of the boulder hills of Hemakuta and the sacred Tungabhadra river valley.',
       sanctumDesc: 'The grand Maha Mandapa with 56 musical pillars echoing classical ragas.',
       courtyardDesc: 'Direct frontal alignment from the stone chariot to the temple’s eastern entrance gopuram.',
+      aerialImage: 'https://images.unsplash.com/photo-1600100397941-865f3f0190a9?auto=format&fit=crop&w=2000&q=80',
+      sanctumImage: 'https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?auto=format&fit=crop&w=2000&q=80',
+      courtyardImage: 'https://images.unsplash.com/photo-1609137144813-7d9921338f24?auto=format&fit=crop&w=2000&q=80',
     },
     visitTips: {
       bestTime: 'Sunrise or Sunset (5:30 AM / 6:00 PM) when the granite glows rich golden-orange against the blue sky.',
@@ -679,6 +697,9 @@ export const MONUMENTS: Monument[] = [
       aerialDesc: 'A panoramic view over South Delhi’s green ridge and the uncompleted base of Alai Minar.',
       sanctumDesc: 'The tomb chamber of Sultan Iltutmish with soaring cenotaph and carved squinches.',
       courtyardDesc: 'The central courtyard around the Iron Pillar surrounded by carved stone cloister arcades.',
+      aerialImage: 'https://images.unsplash.com/photo-1585135497273-1a86b09fe70e?auto=format&fit=crop&w=2000&q=80',
+      sanctumImage: 'https://images.unsplash.com/photo-1597040663342-45b6af3d91a5?auto=format&fit=crop&w=2000&q=80',
+      courtyardImage: 'https://images.unsplash.com/photo-1598890777032-bde835ba27c2?auto=format&fit=crop&w=2000&q=80',
     },
     visitTips: {
       bestTime: 'Late afternoon (3:30 PM - 5:30 PM) when warm sunlight highlights the red sandstone bands.',
@@ -777,6 +798,9 @@ export const MONUMENTS: Monument[] = [
       aerialDesc: 'Aerial perspective across the massive moat, defensive bastions, and the Cauvery delta plains.',
       sanctumDesc: 'The 3.7-meter high monolithic Shiva Lingam in the sanctum sanctorum.',
       courtyardDesc: 'The vast granite paved quadrangle framed by pillared cloisters containing 108 dance karanas.',
+      aerialImage: 'https://images.unsplash.com/photo-1627894483216-2138af692e32?auto=format&fit=crop&w=2000&q=80',
+      sanctumImage: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=2000&q=80',
+      courtyardImage: 'https://images.unsplash.com/photo-1600100397608-f010e421d3f9?auto=format&fit=crop&w=2000&q=80',
     },
     visitTips: {
       bestTime: 'Evening (4:30 PM - 7:30 PM) when the setting sun illuminates the golden granite and the lamps are lit.',

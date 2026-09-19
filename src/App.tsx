@@ -9,7 +9,6 @@ import { TimeMachineSlider } from './components/TimeMachineSlider';
 import { MonumentsExplorer } from './components/MonumentsExplorer';
 import { CreatureLoreSection } from './components/CreatureLoreSection';
 import { HeritagePassport } from './components/HeritagePassport';
-import { PlanTripSection } from './components/PlanTripSection';
 import { CameraARViewer } from './components/CameraARViewer';
 import { VR360Tour } from './components/VR360Tour';
 import { ModelViewerWebXR } from './components/ModelViewerWebXR';
@@ -94,7 +93,7 @@ export function App() {
 
       {/* Hero Section */}
       <HeroSection
-        onStartAR={() => setIsAROpen(true)}
+        onStartAR={() => setIsWebXROpen(true)}
         onExploreClick={() => {
           const el = document.getElementById('viewer');
           if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -126,21 +125,21 @@ export function App() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                triggerHaptic('tap');
+                triggerHaptic('success');
                 setIsWebXROpen(true);
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-black/60 hover:bg-black/90 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-all cursor-pointer backdrop-blur-md"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black text-xs font-bold shadow-lg shadow-amber-500/25 transition-all cursor-pointer"
             >
-              <Smartphone className="w-4 h-4 text-amber-400" />
-              <span>Phone AR QR</span>
+              <Smartphone className="w-4 h-4" />
+              <span>Native Floor AR</span>
             </button>
 
             <button
               onClick={() => {
-                triggerHaptic('success');
+                triggerHaptic('tap');
                 setIsAROpen(true);
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black text-xs font-bold shadow-lg shadow-amber-500/25 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-black/60 hover:bg-black/90 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-all cursor-pointer backdrop-blur-md"
             >
               <Camera className="w-4 h-4" />
               <span>Camera AR</span>
@@ -269,17 +268,13 @@ export function App() {
       {/* Heritage Passport Gamification */}
       <HeritagePassport unlockedBadges={unlockedBadges} />
 
-      {/* Cultural Trip Planner */}
-      <PlanTripSection />
-
       {/* Footer */}
       <Footer />
 
       {/* Mobile Sticky Bottom Navigation */}
       <MobileBottomNav
-        onOpenAR={() => setIsAROpen(true)}
+        onOpenAR={() => setIsWebXROpen(true)}
       />
-
 
       {/* Modals: AR Camera Overlay */}
       {isAROpen && (
@@ -287,6 +282,10 @@ export function App() {
           monument={selectedMonument}
           onClose={() => setIsAROpen(false)}
           onUnlockBadge={(badge) => handleUnlockBadge(badge)}
+          onOpenNativeAR={() => {
+            setIsAROpen(false);
+            setIsWebXROpen(true);
+          }}
         />
       )}
 
@@ -298,11 +297,15 @@ export function App() {
         />
       )}
 
-      {/* Modals: Phone AR QR Quick Look */}
+      {/* Modals: Phone Native WebXR & Scene Viewer Quick Look */}
       {isWebXROpen && (
         <ModelViewerWebXR
           monument={selectedMonument}
           onClose={() => setIsWebXROpen(false)}
+          onSwitchToCameraAR={() => {
+            setIsWebXROpen(false);
+            setIsAROpen(true);
+          }}
         />
       )}
     </div>

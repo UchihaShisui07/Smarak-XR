@@ -1,3 +1,5 @@
+import type React from 'react';
+
 export type MonumentId =
   | 'taj-mahal'
   | 'konark-sun'
@@ -69,6 +71,9 @@ export type Monument = {
     aerialDesc: string;
     sanctumDesc: string;
     courtyardDesc: string;
+    aerialImage: string;
+    sanctumImage: string;
+    courtyardImage: string;
   };
   visitTips: {
     bestTime: string;
@@ -92,3 +97,26 @@ export type SacredCreature = {
   colorHex: string;
   badgeTitle: string;
 };
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'model-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        src?: string;
+        ar?: boolean;
+        'ar-modes'?: string;
+        'camera-controls'?: boolean;
+        'auto-rotate'?: boolean;
+        'shadow-intensity'?: string;
+        'shadow-softness'?: string;
+        exposure?: string;
+        'ar-scale'?: string;
+        alt?: string;
+        loading?: string;
+        reveal?: string;
+        style?: React.CSSProperties;
+      };
+    }
+  }
+}
+

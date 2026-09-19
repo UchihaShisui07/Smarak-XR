@@ -93,12 +93,6 @@ export const Navbar: React.FC<Props> = ({
           >
             Passport
           </button>
-          <button
-            onClick={() => scrollTo('plan')}
-            className="hover:text-amber-400 transition-colors cursor-pointer"
-          >
-            Trip Planner
-          </button>
         </nav>
 
         {/* Right Action Icons */}
@@ -185,12 +179,6 @@ export const Navbar: React.FC<Props> = ({
             className="text-left py-2 px-3 rounded-xl hover:bg-white/5 hover:text-amber-400"
           >
             📜 Heritage Passport
-          </button>
-          <button
-            onClick={() => scrollTo('plan')}
-            className="text-left py-2 px-3 rounded-xl hover:bg-white/5 hover:text-amber-400"
-          >
-            🧭 Pilgrimage Trip Planner
           </button>
         </div>
       )}

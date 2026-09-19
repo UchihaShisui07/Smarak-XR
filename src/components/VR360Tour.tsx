@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import type { Monument } from '../types';
-import { X, Compass, Volume2, VolumeX, Eye, ArrowUpRight, Sparkles, Smartphone } from 'lucide-react';
+import { X, Compass, Volume2, VolumeX, Eye, ArrowUpRight, Sparkles, Smartphone, Loader2, Camera } from 'lucide-react';
 import { soundEngine } from '../services/soundEngine';
 import { voiceGuide } from '../services/voiceGuide';
 import { triggerHaptic } from '../utils/haptics';
@@ -18,6 +18,8 @@ export const VR360Tour: React.FC<Props> = ({ monument, onClose }) => {
   const [currentView, setCurrentView] = useState<VRPanoView>('aerial');
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [gyroActive, setGyroActive] = useState(false);
+  const [isLoadingTexture, setIsLoadingTexture] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -34,75 +36,73 @@ export const VR360Tour: React.FC<Props> = ({ monument, onClose }) => {
   const onPointerDownLon = useRef(0);
   const onPointerDownLat = useRef(0);
 
-  // Generate procedural high-resolution 360 photosphere texture for each viewpoint
-  const createPhotosphereTexture = (view: VRPanoView): THREE.CanvasTexture => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 2048;
-    canvas.height = 1024;
-    const ctx = canvas.getContext('2d')!;
-
-    // Horizon gradient based on view
-    const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    if (view === 'aerial') {
-      grad.addColorStop(0, '#0a0d24');
-      grad.addColorStop(0.35, '#2e1065');
-      grad.addColorStop(0.5, '#ea580c');
-      grad.addColorStop(0.55, '#f59e0b');
-      grad.addColorStop(0.6, '#1e293b');
-      grad.addColorStop(1, '#020617');
-    } else if (view === 'sanctum') {
-      grad.addColorStop(0, '#1c1917');
-      grad.addColorStop(0.4, '#451a03');
-      grad.addColorStop(0.5, '#b45309');
-      grad.addColorStop(0.6, '#292524');
-      grad.addColorStop(1, '#0c0a09');
-    } else {
-      // Courtyard
-      grad.addColorStop(0, '#0f172a');
-      grad.addColorStop(0.4, '#1e3a8a');
-      grad.addColorStop(0.5, '#f97316');
-      grad.addColorStop(0.53, '#fde047');
-      grad.addColorStop(0.58, '#334155');
-      grad.addColorStop(1, '#0f172a');
+  // Helper to get image URL for the active viewpoint
+  const getPhotosphereUrl = (view: VRPanoView): string => {
+    switch (view) {
+      case 'aerial':
+        return monument.vrPano.aerialImage || 'https://upload.wikimedia.org/wikipedia/commons/f/fb/Taj_Mahal_360%C2%B0_View.jpg';
+      case 'sanctum':
+        return monument.vrPano.sanctumImage || 'https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=2000&q=80';
+      case 'courtyard':
+        return monument.vrPano.courtyardImage || 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=2000&q=80';
     }
+  };
+
+  // High quality fallback gradient sphere if network fails
+  const createFallbackTexture = (): THREE.CanvasTexture => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d')!;
+    const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    grad.addColorStop(0, '#0d1322');
+    grad.addColorStop(0.4, '#1e293b');
+    grad.addColorStop(0.55, '#f59e0b');
+    grad.addColorStop(0.65, '#090d16');
+    grad.addColorStop(1, '#030712');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    return new THREE.CanvasTexture(canvas);
+  };
 
-    // Render stars and sacred geometry in the sky
-    ctx.fillStyle = '#ffffff';
-    for (let i = 0; i < 400; i++) {
-      const sx = Math.random() * canvas.width;
-      const sy = Math.random() * (canvas.height * 0.45);
-      const r = Math.random() * 2.2;
-      ctx.beginPath();
-      ctx.arc(sx, sy, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
+  // Load real photograph into sphere material
+  const loadTextureForView = (view: VRPanoView) => {
+    if (!sphereRef.current) return;
+    setIsLoadingTexture(true);
+    setLoadError(null);
 
-    // Render monument silhouettes & mandala patterns along the 360 horizon
-    ctx.strokeStyle = 'rgba(245, 158, 11, 0.35)';
-    ctx.lineWidth = 2;
-    for (let x = 0; x < canvas.width; x += 180) {
-      // Draw temple shikhara or dome silhouette on horizon
-      const baseY = canvas.height * 0.52;
-      ctx.beginPath();
-      ctx.moveTo(x - 60, baseY);
-      ctx.lineTo(x, baseY - 120);
-      ctx.lineTo(x + 60, baseY);
-      ctx.fillStyle = 'rgba(15, 10, 25, 0.85)';
-      ctx.fill();
-      ctx.stroke();
+    const url = getPhotosphereUrl(view);
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.setCrossOrigin('anonymous');
 
-      // Kalasha finial
-      ctx.beginPath();
-      ctx.arc(x, baseY - 130, 8, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffd700';
-      ctx.fill();
-    }
+    textureLoader.load(
+      url,
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.mapping = THREE.EquirectangularReflectionMapping;
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
 
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-    return texture;
+        if (sphereRef.current) {
+          const mat = sphereRef.current.material as THREE.MeshBasicMaterial;
+          mat.map = texture;
+          mat.needsUpdate = true;
+        }
+        setIsLoadingTexture(false);
+      },
+      undefined,
+      (err) => {
+        console.warn('Error loading photosphere, applying ambient fallback:', err);
+        if (sphereRef.current) {
+          const fallback = createFallbackTexture();
+          const mat = sphereRef.current.material as THREE.MeshBasicMaterial;
+          mat.map = fallback;
+          mat.needsUpdate = true;
+        }
+        setLoadError('High-res panorama loaded with ambient view');
+        setIsLoadingTexture(false);
+      }
+    );
   };
 
   useEffect(() => {
@@ -118,22 +118,25 @@ export const VR360Tour: React.FC<Props> = ({ monument, onClose }) => {
     const camera = new THREE.PerspectiveCamera(75, width / height, 1, 1100);
     cameraRef.current = camera;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
     // 360 Inverted Photosphere Mesh
-    const sphereGeo = new THREE.SphereGeometry(500, 60, 40);
-    sphereGeo.scale(-1, 1, 1); // Invert faces inward
+    const sphereGeo = new THREE.SphereGeometry(500, 64, 48);
+    sphereGeo.scale(-1, 1, 1); // Invert faces inward so camera inside looks outward
 
-    const texture = createPhotosphereTexture(currentView);
-    const sphereMat = new THREE.MeshBasicMaterial({ map: texture });
-    const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+    const initialMat = new THREE.MeshBasicMaterial({ map: createFallbackTexture() });
+    const sphere = new THREE.Mesh(sphereGeo, initialMat);
     scene.add(sphere);
     sphereRef.current = sphere;
+
+    // Load initial photograph
+    loadTextureForView(currentView);
 
     // Animation Loop
     let animId: number;
@@ -141,7 +144,7 @@ export const VR360Tour: React.FC<Props> = ({ monument, onClose }) => {
       animId = requestAnimationFrame(animate);
 
       if (!isUserInteracting.current && !gyroActive) {
-        lon.current += 0.04; // Gentle drift
+        lon.current += 0.03; // Gentle natural panoramic drift
       }
 
       lat.current = Math.max(-85, Math.min(85, lat.current));
@@ -260,13 +263,9 @@ export const VR360Tour: React.FC<Props> = ({ monument, onClose }) => {
 
   // Update Photosphere when viewpoint changes
   useEffect(() => {
-    if (sphereRef.current) {
-      const newTex = createPhotosphereTexture(currentView);
-      (sphereRef.current.material as THREE.MeshBasicMaterial).map = newTex;
-      (sphereRef.current.material as THREE.MeshBasicMaterial).needsUpdate = true;
-      soundEngine.playTempleBell(523.25, 2.0);
-    }
-  }, [currentView]);
+    loadTextureForView(currentView);
+    soundEngine.playTempleBell(523.25, 2.0);
+  }, [currentView, monument.id]);
 
   const getViewDescription = () => {
     switch (currentView) {
@@ -282,11 +281,10 @@ export const VR360Tour: React.FC<Props> = ({ monument, onClose }) => {
   const handleAudioTour = () => {
     triggerHaptic('tap');
     soundEngine.playTempleBell(659, 1.5);
-    const desc = `${monument.name} 360-degree Virtual Tour. ${getViewDescription()}`;
+    const desc = `${monument.name} authentic 360-degree photographic tour. ${getViewDescription()}`;
     voiceGuide.togglePlay(desc, 'en');
     setIsPlayingAudio(!isPlayingAudio);
   };
-
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-2 sm:p-4">
@@ -294,18 +292,36 @@ export const VR360Tour: React.FC<Props> = ({ monument, onClose }) => {
         {/* 360 WebGL Viewport */}
         <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
+        {/* Loading Spinner Overlay */}
+        {isLoadingTexture && (
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-none animate-in fade-in">
+            <Loader2 className="w-10 h-10 text-amber-400 animate-spin mb-3" />
+            <span className="font-cinzel font-bold text-white text-base">
+              Loading 360° Real Photograph...
+            </span>
+            <span className="text-xs text-amber-200/80 font-outfit mt-1">
+              {monument.name} • {currentView.toUpperCase()} Vantage Point
+            </span>
+          </div>
+        )}
+
         {/* Top Header Overlay */}
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-20">
-          <div className="flex items-center gap-3 bg-black/75 backdrop-blur-md px-4 py-2 rounded-2xl border border-amber-500/30 pointer-events-auto">
+          <div className="flex items-center gap-3 bg-black/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-amber-500/30 pointer-events-auto">
             <Compass className="w-5 h-5 text-amber-400 animate-spin-slow" />
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-cinzel font-bold text-white text-base">360° VR Immersion</h3>
+                <h3 className="font-cinzel font-bold text-white text-sm sm:text-base">
+                  Authentic 360° VR Immersion
+                </h3>
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-medium">
                   {monument.name}
                 </span>
               </div>
-              <p className="text-xs text-amber-200/70 font-outfit">Click & Drag to look 360° around</p>
+              <p className="text-xs text-amber-200/70 font-outfit flex items-center gap-1.5">
+                <Camera className="w-3.5 h-3.5 text-amber-400" />
+                <span>Real Heritage Photography • Drag or move phone to look around</span>
+              </p>
             </div>
           </div>
 
@@ -320,7 +336,7 @@ export const VR360Tour: React.FC<Props> = ({ monument, onClose }) => {
               }`}
             >
               <Smartphone className={`w-4 h-4 ${gyroActive ? 'animate-bounce' : ''}`} />
-              <span className="hidden sm:inline">{gyroActive ? 'Gyro ON' : 'Gyro Tracking'}</span>
+              <span className="hidden sm:inline">{gyroActive ? 'Gyro ON' : 'Phone Motion Gyro'}</span>
               <span className="sm:hidden">{gyroActive ? 'Gyro ON' : 'Gyro'}</span>
             </button>
 
@@ -333,7 +349,7 @@ export const VR360Tour: React.FC<Props> = ({ monument, onClose }) => {
               }`}
             >
               {isPlayingAudio ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-              <span className="hidden sm:inline">{isPlayingAudio ? 'Mute Guide' : 'Listen VR Narration'}</span>
+              <span className="hidden sm:inline">{isPlayingAudio ? 'Mute Audio' : 'Audio Narration'}</span>
             </button>
 
             <button
@@ -343,26 +359,36 @@ export const VR360Tour: React.FC<Props> = ({ monument, onClose }) => {
               <X className="w-5 h-5" />
             </button>
           </div>
-
         </div>
 
         {/* Viewpoint Description Card */}
-        <div className="absolute bottom-20 left-4 right-4 md:left-6 md:w-[480px] p-4 rounded-2xl bg-black/80 backdrop-blur-xl border border-amber-500/40 shadow-2xl z-20 pointer-events-auto animate-in fade-in slide-in-from-bottom-3">
-          <div className="flex items-center gap-2 text-amber-400 text-xs font-bold mb-1.5">
-            <Sparkles className="w-4 h-4" />
-            <span>Vantage Point: {currentView.toUpperCase()}</span>
+        <div className="absolute bottom-20 left-4 right-4 md:left-6 md:w-[480px] p-4 rounded-2xl bg-black/85 backdrop-blur-xl border border-amber-500/40 shadow-2xl z-20 pointer-events-auto animate-in fade-in slide-in-from-bottom-3">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <div className="flex items-center gap-2 text-amber-400 text-xs font-bold">
+              <Sparkles className="w-4 h-4" />
+              <span>VANTAGE POINT: {currentView.toUpperCase()}</span>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">
+              Photographic 360°
+            </span>
           </div>
           <p className="text-xs text-amber-100/90 leading-relaxed font-outfit">
             {getViewDescription()}
           </p>
+          {loadError && (
+            <p className="text-[10px] text-amber-400/80 mt-1 font-mono">{loadError}</p>
+          )}
         </div>
 
         {/* Bottom Teleport Navigation Bar */}
         <div className="absolute bottom-4 left-4 right-4 flex items-center justify-center gap-2 z-20 pointer-events-auto">
-          <div className="flex items-center gap-2 bg-black/80 backdrop-blur-md p-1.5 rounded-2xl border border-white/20 shadow-2xl">
+          <div className="flex items-center gap-2 bg-black/85 backdrop-blur-md p-1.5 rounded-2xl border border-white/20 shadow-2xl">
             <button
-              onClick={() => setCurrentView('aerial')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+              onClick={() => {
+                triggerHaptic('tap');
+                setCurrentView('aerial');
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
                 currentView === 'aerial'
                   ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-black font-bold shadow-lg'
                   : 'text-gray-300 hover:text-white'
@@ -373,8 +399,11 @@ export const VR360Tour: React.FC<Props> = ({ monument, onClose }) => {
             </button>
 
             <button
-              onClick={() => setCurrentView('sanctum')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+              onClick={() => {
+                triggerHaptic('tap');
+                setCurrentView('sanctum');
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
                 currentView === 'sanctum'
                   ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-black font-bold shadow-lg'
                   : 'text-gray-300 hover:text-white'
@@ -385,8 +414,11 @@ export const VR360Tour: React.FC<Props> = ({ monument, onClose }) => {
             </button>
 
             <button
-              onClick={() => setCurrentView('courtyard')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+              onClick={() => {
+                triggerHaptic('tap');
+                setCurrentView('courtyard');
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
                 currentView === 'courtyard'
                   ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-black font-bold shadow-lg'
                   : 'text-gray-300 hover:text-white'

@@ -12,18 +12,24 @@ import {
   CheckCircle2,
   Smartphone,
   Scan,
+  Move,
 } from 'lucide-react';
 import { soundEngine } from '../services/soundEngine';
 import { triggerHaptic } from '../utils/haptics';
-
 
 interface Props {
   monument: Monument;
   onClose: () => void;
   onUnlockBadge?: (name: string) => void;
+  onOpenNativeAR?: () => void;
 }
 
-export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBadge }) => {
+export const CameraARViewer: React.FC<Props> = ({
+  monument,
+  onClose,
+  onUnlockBadge,
+  onOpenNativeAR,
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasMountRef = useRef<HTMLDivElement>(null);
 
@@ -35,15 +41,15 @@ export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBad
   // Transform controls
   const [scale, setScale] = useState(1.0);
   const [rotationY, setRotationY] = useState(0);
-  const [reconstructionAlpha, setReconstructionAlpha] = useState(0.85); // 0 = modern ruins/video, 1 = golden age 3D overlay
+  const [reconstructionAlpha, setReconstructionAlpha] = useState(0.85);
   const [selectedCreatureId, setSelectedCreatureId] = useState<CreatureId | 'monument'>('monument');
+  const [modelPosition, setModelPosition] = useState<[number, number, number]>([0, 0, 0]);
 
   // On-Site simulated location & compass
   const simulatedHeading = 42;
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [snapshotTaken, setSnapshotTaken] = useState(false);
-
 
   // Three.js internal references
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -103,8 +109,8 @@ export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBad
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100);
-    camera.position.set(0, 2.0, 5.5);
-    camera.lookAt(0, 1.2, 0);
+    camera.position.set(0, 1.8, 5.0);
+    camera.lookAt(0, 0.8, 0);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -116,25 +122,58 @@ export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBad
     rendererRef.current = renderer;
 
     // Realistic outdoor lighting matching sun
-    const ambientLight = new THREE.AmbientLight(0xffeedd, 1.4);
-    const sunLight = new THREE.DirectionalLight(0xfff7ed, 2.2);
+    const ambientLight = new THREE.AmbientLight(0xffeedd, 1.6);
+    const sunLight = new THREE.DirectionalLight(0xfff7ed, 2.4);
     sunLight.position.set(4, 8, 4);
     scene.add(ambientLight);
     scene.add(sunLight);
 
+    // Subtle blue fill light
+    const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.8);
+    fillLight.position.set(-4, 3, -2);
+    scene.add(fillLight);
+
     // Spatial Ground Reticle (AR Target Circle)
-    const reticleGeo = new THREE.RingGeometry(1.6, 1.75, 32);
+    const reticleGeo = new THREE.RingGeometry(1.4, 1.55, 32);
     const reticleMat = new THREE.MeshBasicMaterial({
       color: 0xf59e0b,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.7,
     });
     const reticle = new THREE.Mesh(reticleGeo, reticleMat);
     reticle.rotation.x = -Math.PI / 2;
-    reticle.position.y = 0.02;
+    reticle.position.set(0, 0.02, 0);
     scene.add(reticle);
     reticleRef.current = reticle;
+
+    // Tap-to-Place Raycaster
+    const raycaster = new THREE.Raycaster();
+    const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // Horizontal ground at y=0
+
+    const handleCanvasClick = (e: MouseEvent | TouchEvent) => {
+      if (!container || !cameraRef.current) return;
+      const rect = container.getBoundingClientRect();
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+      const x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(new THREE.Vector2(x, y), cameraRef.current);
+      const intersectionPoint = new THREE.Vector3();
+      if (raycaster.ray.intersectPlane(groundPlane, intersectionPoint)) {
+        // Clamp position within reasonable bounds
+        const clampedX = Math.max(-4, Math.min(4, intersectionPoint.x));
+        const clampedZ = Math.max(-4, Math.min(2, intersectionPoint.z));
+        setModelPosition([clampedX, 0, clampedZ]);
+        triggerHaptic('tap');
+        soundEngine.playTempleBell(600, 0.8);
+      }
+    };
+
+    const dom = renderer.domElement;
+    dom.addEventListener('click', handleCanvasClick);
 
     // Build Initial 3D Model
     loadActiveModel();
@@ -144,11 +183,11 @@ export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBad
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
-      clock += 0.02;
+      clock += 0.025;
 
       // Gentle pulsating reticle
       if (reticleRef.current) {
-        const s = 1.0 + Math.sin(clock * 2) * 0.05;
+        const s = 1.0 + Math.sin(clock * 2) * 0.06;
         reticleRef.current.scale.set(s, s, s);
       }
 
@@ -170,6 +209,7 @@ export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBad
 
     return () => {
       cancelAnimationFrame(animId);
+      dom.removeEventListener('click', handleCanvasClick);
       window.removeEventListener('resize', onResize);
       renderer.dispose();
     };
@@ -196,12 +236,17 @@ export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBad
       });
     }
 
-    newModel.position.set(0, 0, 0);
+    newModel.position.set(modelPosition[0], modelPosition[1], modelPosition[2]);
     newModel.scale.set(scale, scale, scale);
     newModel.rotation.y = rotationY;
 
     modelGroupRef.current = newModel;
     sceneRef.current.add(newModel);
+
+    // Sync reticle position
+    if (reticleRef.current) {
+      reticleRef.current.position.set(modelPosition[0], 0.02, modelPosition[2]);
+    }
   };
 
   useEffect(() => {
@@ -210,8 +255,13 @@ export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBad
 
   useEffect(() => {
     if (modelGroupRef.current) {
+      modelGroupRef.current.position.set(modelPosition[0], modelPosition[1], modelPosition[2]);
       modelGroupRef.current.scale.set(scale, scale, scale);
       modelGroupRef.current.rotation.y = rotationY;
+
+      if (reticleRef.current) {
+        reticleRef.current.position.set(modelPosition[0], 0.02, modelPosition[2]);
+      }
 
       // If in onsite mode, adjust opacity of materials for time-travel cross-fade
       if (arMode === 'onsite') {
@@ -223,7 +273,7 @@ export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBad
         });
       }
     }
-  }, [scale, rotationY, reconstructionAlpha, arMode]);
+  }, [modelPosition, scale, rotationY, reconstructionAlpha, arMode]);
 
   // Simulate scanning of architectural features
   const handleScanFeature = () => {
@@ -251,11 +301,10 @@ export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBad
     setTimeout(() => setSnapshotTaken(false), 2500);
   };
 
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-2 sm:p-4">
       <div className="relative w-full h-full max-w-6xl max-h-[92vh] rounded-3xl overflow-hidden glass-royal border border-amber-500/40 shadow-2xl flex flex-col">
-        {/* Background Camera Feed / Fallback */}
+        {/* Background Camera Feed / Fallback (No inverted mirroring for environment camera) */}
         <div className="absolute inset-0 z-0 overflow-hidden bg-[#0a0c16]">
           {cameraActive ? (
             <video
@@ -263,7 +312,7 @@ export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBad
               playsInline
               muted
               autoPlay
-              className="w-full h-full object-cover transform scale-x-[-1] md:scale-x-100"
+              className="w-full h-full object-cover"
             />
           ) : (
             <div className="relative w-full h-full flex items-center justify-center">
@@ -291,10 +340,10 @@ export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBad
         </div>
 
         {/* Overlay Three.js WebGL Canvas */}
-        <div ref={canvasMountRef} className="absolute inset-0 z-10 pointer-events-auto" />
+        <div ref={canvasMountRef} className="absolute inset-0 z-10 pointer-events-auto cursor-crosshair" />
 
         {/* Top Header Controls */}
-        <div className="relative z-20 flex items-center justify-between p-4 bg-gradient-to-b from-black/85 via-black/40 to-transparent">
+        <div className="relative z-20 flex items-center justify-between p-4 bg-gradient-to-b from-black/90 via-black/50 to-transparent">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-amber-500 text-black shadow-lg shadow-amber-500/25">
               <Camera className="w-5 h-5" />
@@ -302,22 +351,37 @@ export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBad
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-cinzel font-bold text-white text-base sm:text-lg">
-                  {arMode === 'remote' ? 'At-Home AR Projection' : 'On-Site Monument Overlay'}
+                  {arMode === 'remote' ? 'Interactive Camera AR' : 'On-Site Monument Overlay'}
                 </h3>
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-medium">
-                  WebXR Ready
+                  WebXR Active
                 </span>
               </div>
               <p className="text-xs text-amber-200/70 font-outfit">
                 {arMode === 'remote'
-                  ? 'Pinch/Slide to place on table or floor'
+                  ? 'Tap anywhere on the floor/table to place • Drag sliders to resize & rotate'
                   : `Real-time GPS lock: ${monument.name} (${monument.location})`}
               </p>
             </div>
           </div>
 
-          {/* Mode Switcher: Remote vs On-Site */}
           <div className="flex items-center gap-2">
+            {/* Direct Switch to Native ARCore / Scene Viewer */}
+            {onOpenNativeAR && (
+              <button
+                onClick={() => {
+                  triggerHaptic('success');
+                  soundEngine.playTempleBell(784, 1.8);
+                  onOpenNativeAR();
+                }}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-black font-cinzel font-bold text-xs shadow-lg shadow-amber-500/25 transition-all cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Native Floor AR</span>
+              </button>
+            )}
+
+            {/* Mode Switcher: Remote vs On-Site */}
             <div className="flex items-center bg-black/60 backdrop-blur-md p-1 rounded-2xl border border-white/10 text-xs">
               <button
                 onClick={() => setArMode('remote')}
@@ -343,12 +407,22 @@ export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBad
 
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-black/60 hover:bg-black/80 text-gray-300 hover:text-white border border-white/15 transition-all"
+              className="p-2 rounded-xl bg-black/60 hover:bg-black/80 text-gray-300 hover:text-white border border-white/15 transition-all cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
+
+        {/* Tap-to-Place Instruction Floating Pill */}
+        {arMode === 'remote' && (
+          <div className="relative z-20 self-center pointer-events-none mt-2">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/70 backdrop-blur-md border border-amber-500/30 text-amber-300 text-xs shadow-lg">
+              <Move className="w-3.5 h-3.5 text-amber-400" />
+              <span>Tap anywhere on screen to reposition model</span>
+            </div>
+          </div>
+        )}
 
         {/* On-Site HUD Overlay (Compass Radar & Feature Scanner) */}
         {arMode === 'onsite' && (
@@ -412,7 +486,7 @@ export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBad
         <div className="flex-1" />
 
         {/* Bottom Panel: Creature / Monument Selector & AR Adjustment Controls */}
-        <div className="relative z-20 p-4 bg-gradient-to-t from-black/90 via-black/70 to-transparent flex flex-col gap-3">
+        <div className="relative z-20 p-4 bg-gradient-to-t from-black/95 via-black/80 to-transparent flex flex-col gap-3">
           {/* 1. Item Selector: Choose Monument OR Sacred Creatures */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
             <button
@@ -480,6 +554,20 @@ export const CameraARViewer: React.FC<Props> = ({ monument, onClose, onUnlockBad
                 {Math.round((rotationY * 180) / Math.PI)}°
               </span>
             </div>
+
+            {/* Native AR launch button on mobile */}
+            {onOpenNativeAR && (
+              <button
+                onClick={() => {
+                  triggerHaptic('success');
+                  onOpenNativeAR();
+                }}
+                className="sm:hidden flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Native AR</span>
+              </button>
+            )}
 
             {/* Snapshot Postcard Button */}
             <button
