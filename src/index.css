@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-cinzel: 'Cinzel', serif;
+    --font-cinzel-dec: 'Cinzel Decorative', cursive;
+    --font-rozha: 'Rozha One', serif;
+    --font-outfit: 'Outfit', sans-serif;
+    --font-yatra: 'Yatra One', cursive;
+  }
+
+  body {
+    font-family: var(--font-outfit), sans-serif;
+    background-color: #080912;
+    color: #f1ede4;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0d0e1b;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #3b2d54;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #e59330;
+  }
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+
+.font-cinzel-dec {
+  font-family: 'Cinzel Decorative', cursive;
+}
+
+.font-rozha {
+  font-family: 'Rozha One', serif;
+}
+
+.font-outfit {
+  font-family: 'Outfit', sans-serif;
+}
+
+.font-yatra {
+  font-family: 'Yatra One', cursive;
+}
+
+/* Glassmorphism royal effects */
+.glass-royal {
+  background: rgba(18, 16, 32, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+}
+
+.glass-royal-hover:hover {
+  background: rgba(28, 22, 48, 0.82);
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 10px 30px -10px rgba(245, 158, 11, 0.25);
+}
+
+.glass-gold-pill {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.05) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, #FFE082 0%, #F59E0B 50%, #D97706 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.saffron-gradient-text {
+  background: linear-gradient(135deg, #FED7AA 0%, #F97316 50%, #EA580C 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-border-glow {
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.2);
+}
+
+/* Slow rotation for mandalas */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 40s linear infinite;
+}
+
+.animate-spin-reverse-slow {
+  animation: spin-slow 50s linear infinite reverse;
+}
+
+/* Float animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Pulse radar for AR */
+@keyframes radar-ping {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.animate-radar-ping {
+  animation: radar-ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
