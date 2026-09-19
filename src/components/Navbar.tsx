@@ -1,229 +1,231 @@
 import React, { useState } from 'react';
-import { Menu, X, Volume2, VolumeX, Camera, Smartphone } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import {
+  Compass,
+  Clock,
+  AlertTriangle,
+  HeartHandshake,
+  Bot,
+  BookOpen,
+  Users,
+  Search,
+  PlusCircle,
+  Award,
+  Menu,
+  X,
+  Sparkles
+} from 'lucide-react';
+import { useHeritage } from '../context/HeritageContext';
 
-import { soundEngine } from '../services/soundEngine';
-import { triggerHaptic } from '../utils/haptics';
+export const Navbar: React.FC = () => {
+  const location = useLocation();
+  const {
+    userPoints,
+    userLevel,
+    openPreserveModal,
+    openSearchModal,
+    language,
+    setLanguage
+  } = useHeritage();
 
-interface Props {
-  isAudioPlaying: boolean;
-  onToggleAudio: () => void;
-  onOpenAR: () => void;
-  onOpenPassport: () => void;
-}
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-export const Navbar: React.FC<Props> = ({
-  isAudioPlaying,
-  onToggleAudio,
-  onOpenAR,
-  onOpenPassport,
-}) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showPhoneQR, setShowPhoneQR] = useState(false);
+  const navLinks = [
+    { path: '/', label: 'Home', icon: Sparkles },
+    { path: '/discover', label: 'Discover', icon: Compass },
+    { path: '/time-machine', label: 'Time Machine', icon: Clock },
+    { path: '/vanishing', label: 'Vanishing Culture', icon: AlertTriangle, badge: 'Endangered' },
+    { path: '/adopt', label: 'Adopt Heritage', icon: HeartHandshake },
+    { path: '/ai-storyteller', label: 'Talk to Heritage', icon: Bot, badge: 'AI' },
+    { path: '/stories', label: 'Living Stories', icon: BookOpen },
+    { path: '/community', label: 'Community', icon: Users }
+  ];
 
-  const scrollTo = (id: string) => {
-    triggerHaptic('tap');
-    soundEngine.playTempleBell(600, 1.2);
-    setMobileMenuOpen(false);
-    if (id === 'passport') {
-      onOpenPassport();
-    }
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
-    currentUrl
-  )}&bgcolor=0b0c1a&color=f59e0b`;
+  const languages = ['EN', 'हिन्दी', 'ਪੰਜਾਬੀ', 'தமிழ்', 'বাংলা', 'मराठी'];
 
   return (
-    <header className="fixed top-3 left-0 right-0 z-40 px-3 sm:px-6">
-      <div className="max-w-7xl mx-auto rounded-full glass-royal border border-amber-500/30 shadow-2xl px-4 sm:px-6 py-2.5 flex items-center justify-between">
-        {/* Brand Logo */}
-        <div
-          onClick={() => {
-            triggerHaptic('tap');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          className="flex items-center gap-3 cursor-pointer group"
-        >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-400 flex items-center justify-center text-xl shadow-lg shadow-amber-500/30 group-hover:scale-105 transition-transform">
-            🛕
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-cinzel font-black text-white text-base sm:text-lg tracking-wider">
-                SMARAK
-              </span>
-              <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-gradient-to-r from-amber-400 to-orange-500 text-black">
-                AR
-              </span>
+    <header className="sticky top-0 z-40 w-full bg-[#0C0D14]/95 backdrop-blur-md border-b border-[#D4AF37]/20 transition-all">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-20">
+          {/* Logo */}
+          <Link
+            to="/"
+            className="flex items-center gap-3 group focus:outline-none"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#C85A32] via-[#D4AF37] to-[#1A3026] p-[2px] shadow-lg shadow-[#C85A32]/20 group-hover:scale-105 transition-transform">
+              <div className="w-full h-full bg-[#0C0D14] rounded-[10px] flex items-center justify-center">
+                <span className="text-xl">🪔</span>
+              </div>
             </div>
-            <p className="font-yatra text-[11px] text-amber-400 -mt-1 hidden sm:block">
-              स्मारक एआर • भारतीय धरोहर
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-serif text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-[#FBF9F5] via-[#E5B842] to-[#FBF9F5]">
+                  Heritage Alive
+                </span>
+                <span className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] uppercase font-bold tracking-widest bg-[#C85A32]/20 text-[#E5B842] border border-[#C85A32]/40 rounded">
+                  2.0
+                </span>
+              </div>
+              <p className="text-[11px] text-[#A3A8B8] tracking-wider hidden md:block">
+                Preserve • Experience • Pass It On
+              </p>
+            </div>
+          </Link>
+
+          {/* Desktop Nav Items */}
+          <nav className="hidden xl:flex items-center space-x-1">
+            {navLinks.map(item => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+                    isActive
+                      ? 'text-[#FBF9F5] bg-[#D4AF37]/15 border border-[#D4AF37]/30 shadow-sm'
+                      : 'text-[#C5C8D4] hover:text-[#FBF9F5] hover:bg-white/5'
+                  }`}
+                >
+                  <item.icon className={`w-4 h-4 ${isActive ? 'text-[#E5B842]' : 'text-[#8E92A4]'}`} />
+                  <span>{item.label}</span>
+                  {item.badge && (
+                    <span
+                      className={`text-[9px] px-1 py-0.2 rounded font-semibold uppercase tracking-wider ${
+                        item.badge === 'Endangered'
+                          ? 'bg-[#C85A32]/30 text-[#FF7A59] border border-[#C85A32]/40'
+                          : 'bg-[#1A3026] text-[#64D2B1] border border-[#2D6A4F]'
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Action CTAs */}
+          <div className="flex items-center space-x-3">
+            {/* Quick Search */}
+            <button
+              type="button"
+              onClick={openSearchModal}
+              className="p-2 text-[#C5C8D4] hover:text-[#FBF9F5] hover:bg-white/5 rounded-lg transition-colors border border-white/5"
+              title="Search Traditions (Ctrl+K)"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+
+            {/* Language Selector */}
+            <div className="relative hidden md:block">
+              <select
+                value={language}
+                onChange={e => setLanguage(e.target.value)}
+                className="bg-[#12141F] text-xs text-[#C5C8D4] border border-[#D4AF37]/30 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#E5B842] cursor-pointer"
+              >
+                {languages.map(lang => (
+                  <option key={lang} value={lang}>
+                    {lang}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Gamification Level / Points Badge */}
+            <Link
+              to="/profile"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#D4AF37]/20 to-[#C85A32]/20 border border-[#D4AF37]/40 text-[#FBF9F5] hover:border-[#D4AF37] transition-all group"
+              title={`Your Rank: ${userLevel}`}
+            >
+              <Award className="w-4 h-4 text-[#E5B842] group-hover:rotate-12 transition-transform" />
+              <div className="text-left">
+                <div className="text-xs font-bold leading-none text-[#E5B842]">
+                  {userPoints} <span className="text-[10px] font-normal text-[#A3A8B8]">PTS</span>
+                </div>
+                <div className="text-[10px] text-[#C5C8D4] hidden sm:block leading-tight">
+                  {userLevel}
+                </div>
+              </div>
+            </Link>
+
+            {/* Action Button: Preserve Story */}
+            <button
+              type="button"
+              onClick={() => openPreserveModal('story')}
+              className="hidden lg:flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-gradient-to-r from-[#C85A32] to-[#B3431D] text-[#FBF9F5] font-semibold text-xs shadow-md shadow-[#C85A32]/25 hover:brightness-110 active:scale-95 transition-all border border-[#FF7A59]/40"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Preserve Heritage</span>
+              <span className="bg-[#0C0D14]/40 px-1 py-0.5 rounded text-[9px] text-[#E5B842] font-mono">
+                +100
+              </span>
+            </button>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="xl:hidden p-2 text-[#C5C8D4] hover:text-[#FBF9F5] rounded-lg hover:bg-white/5"
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
-        </div>
-
-        {/* Desktop Nav Links */}
-        <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-gray-200">
-          <button
-            onClick={() => scrollTo('viewer')}
-            className="hover:text-amber-400 transition-colors cursor-pointer"
-          >
-            3D Sanctum
-          </button>
-          <button
-            onClick={() => scrollTo('explore')}
-            className="hover:text-amber-400 transition-colors cursor-pointer"
-          >
-            Monuments
-          </button>
-          <button
-            onClick={() => scrollTo('creatures')}
-            className="hover:text-amber-400 transition-colors cursor-pointer"
-          >
-            Sacred Beasts
-          </button>
-          <button
-            onClick={() => scrollTo('passport')}
-            className="hover:text-amber-400 transition-colors cursor-pointer"
-          >
-            Passport
-          </button>
-        </nav>
-
-        {/* Right Action Icons */}
-        <div className="flex items-center gap-2">
-          {/* Open on Phone QR button */}
-          <button
-            onClick={() => {
-              triggerHaptic('tap');
-              setShowPhoneQR(true);
-            }}
-            title="Scan QR to open on phone"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-400/40 text-amber-300 text-xs font-semibold backdrop-blur-md transition-all cursor-pointer"
-          >
-            <Smartphone className="w-3.5 h-3.5" />
-            <span>Open on Phone</span>
-          </button>
-
-          {/* Sound Drone Toggle */}
-          <button
-            onClick={() => {
-              triggerHaptic('tap');
-              if (!isAudioPlaying) {
-                soundEngine.playTempleBell(523, 1.2);
-              }
-              onToggleAudio();
-            }}
-            title={isAudioPlaying ? 'Mute Tanpura Drone' : 'Start Tanpura Drone'}
-            className={`p-2 rounded-full border transition-all cursor-pointer ${
-              isAudioPlaying
-                ? 'bg-amber-500 text-black border-amber-300 shadow-md shadow-amber-500/30 animate-pulse'
-                : 'bg-black/50 text-gray-300 border-white/10 hover:text-white'
-            }`}
-          >
-            {isAudioPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-          </button>
-
-          {/* Quick AR Launch */}
-          <button
-            onClick={() => {
-              triggerHaptic('success');
-              soundEngine.playTempleBell(659, 2.0);
-              onOpenAR();
-            }}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-cinzel font-bold text-xs shadow-lg shadow-amber-500/25 transition-all transform hover:scale-105 active:scale-95 cursor-pointer"
-          >
-            <Camera className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Camera AR</span>
-          </button>
-
-          {/* Mobile Menu Toggle */}
-          <button
-            onClick={() => {
-              triggerHaptic('tap');
-              setMobileMenuOpen(!mobileMenuOpen);
-            }}
-            className="lg:hidden p-2 rounded-full bg-black/50 text-gray-300 hover:text-white border border-white/10 cursor-pointer"
-          >
-            {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-          </button>
         </div>
       </div>
 
-      {/* Mobile Dropdown Drawer */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden mt-2 p-4 rounded-3xl glass-royal border border-amber-500/30 shadow-2xl flex flex-col gap-3 text-sm font-semibold text-gray-200 animate-in fade-in slide-in-from-top-2">
-          <button
-            onClick={() => scrollTo('viewer')}
-            className="text-left py-2 px-3 rounded-xl hover:bg-white/5 hover:text-amber-400"
-          >
-            🏛️ 3D Sanctum Viewer
-          </button>
-          <button
-            onClick={() => scrollTo('explore')}
-            className="text-left py-2 px-3 rounded-xl hover:bg-white/5 hover:text-amber-400"
-          >
-            🗺️ Monuments Catalog
-          </button>
-          <button
-            onClick={() => scrollTo('creatures')}
-            className="text-left py-2 px-3 rounded-xl hover:bg-white/5 hover:text-amber-400"
-          >
-            ✨ Sacred Bestiary & Beasts
-          </button>
-          <button
-            onClick={() => scrollTo('passport')}
-            className="text-left py-2 px-3 rounded-xl hover:bg-white/5 hover:text-amber-400"
-          >
-            📜 Heritage Passport
-          </button>
-        </div>
-      )}
-
-      {/* Modal: Open on Phone QR Code */}
-      {showPhoneQR && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
-          <div className="relative w-full max-w-sm rounded-3xl p-6 glass-royal border border-amber-500/40 shadow-2xl animate-in zoom-in-95 text-center">
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="xl:hidden bg-[#0F111A] border-b border-[#D4AF37]/20 px-4 pt-3 pb-6 space-y-2 shadow-2xl animate-in slide-in-from-top duration-200">
+          <div className="grid grid-cols-2 gap-2 mb-3">
             <button
-              onClick={() => setShowPhoneQR(false)}
-              className="absolute top-4 right-4 p-2 rounded-xl bg-black/60 hover:bg-black text-gray-300 hover:text-white border border-white/15 cursor-pointer"
+              onClick={() => {
+                openPreserveModal('story');
+                setIsMobileMenuOpen(false);
+              }}
+              className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-gradient-to-r from-[#C85A32] to-[#B3431D] text-[#FBF9F5] text-xs font-bold"
             >
-              <X className="w-5 h-5" />
+              <PlusCircle className="w-4 h-4" />
+              Preserve Heritage (+100)
             </button>
-
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto mb-3">
-              <Smartphone className="w-6 h-6" />
-            </div>
-
-            <h3 className="font-cinzel font-black text-xl text-white mb-1">
-              Experience on Mobile Phone
-            </h3>
-            <p className="text-xs text-amber-200/70 font-outfit mb-4">
-              Scan with your phone camera to enjoy motion gyro AR, camera overlays, and haptic feedback.
-            </p>
-
-            <div className="p-4 rounded-2xl bg-black/70 border border-amber-500/30 flex flex-col items-center justify-center mb-4">
-              <img
-                src={qrUrl}
-                alt="Phone QR Code"
-                className="w-44 h-44 rounded-xl border border-amber-500/40 shadow-lg shadow-amber-500/20"
-              />
-              <span className="mt-3 text-[11px] font-mono text-amber-300/80">
-                Point iPhone Camera or Android Lens
-              </span>
-            </div>
-
             <button
-              onClick={() => setShowPhoneQR(false)}
-              className="w-full py-2.5 rounded-xl bg-amber-500 text-black font-bold text-xs shadow-lg shadow-amber-500/20 hover:bg-amber-400 transition-all cursor-pointer"
+              onClick={() => {
+                openSearchModal();
+                setIsMobileMenuOpen(false);
+              }}
+              className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-[#181B2A] text-[#C5C8D4] text-xs font-semibold border border-white/10"
             >
-              Done
+              <Search className="w-4 h-4" />
+              Search Archives
             </button>
+          </div>
+
+          <div className="space-y-1">
+            {navLinks.map(item => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium ${
+                    isActive
+                      ? 'bg-[#D4AF37]/20 text-[#FBF9F5] border border-[#D4AF37]/40'
+                      : 'text-[#C5C8D4] hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <item.icon className={`w-5 h-5 ${isActive ? 'text-[#E5B842]' : 'text-[#8E92A4]'}`} />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded uppercase font-bold bg-[#C85A32]/20 text-[#FF7A59]">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}

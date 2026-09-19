@@ -1,73 +1,53 @@
 import React from 'react';
-import { Eye, Camera, Compass, Award, Sparkles } from 'lucide-react';
-import { soundEngine } from '../services/soundEngine';
-import { triggerHaptic } from '../utils/haptics';
+import { Link, useLocation } from 'react-router-dom';
+import { Home, Compass, Clock, HeartHandshake, Plus } from 'lucide-react';
+import { useHeritage } from '../context/HeritageContext';
 
-interface Props {
-  onOpenAR: () => void;
-}
+export const MobileBottomNav: React.FC = () => {
+  const location = useLocation();
+  const { openPreserveModal } = useHeritage();
 
-export const MobileBottomNav: React.FC<Props> = ({ onOpenAR }) => {
-
-  const scrollTo = (id: string) => {
-    triggerHaptic('tap');
-    soundEngine.playTempleBell(600, 1.0);
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  const navItems = [
+    { path: '/', label: 'Home', icon: Home },
+    { path: '/discover', label: 'Discover', icon: Compass },
+    { path: 'PRESERVE_ACTION', label: 'Preserve', icon: Plus, isAction: true },
+    { path: '/time-machine', label: 'Time', icon: Clock },
+    { path: '/adopt', label: 'Adopt', icon: HeartHandshake }
+  ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#090a14]/95 backdrop-blur-2xl border-t border-amber-500/30 px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-2xl">
-      <div className="flex items-center justify-around max-w-md mx-auto">
-        <button
-          onClick={() => scrollTo('viewer')}
-          className="flex flex-col items-center gap-1 p-1 text-gray-300 hover:text-amber-400 active:scale-95 transition-all cursor-pointer"
-        >
-          <Eye className="w-5 h-5" />
-          <span className="text-[10px] font-semibold">3D Sanctum</span>
-        </button>
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0C0D14]/95 backdrop-blur-lg border-t border-[#D4AF37]/20 px-2 py-1.5 shadow-[0_-8px_20px_rgba(0,0,0,0.6)]">
+      <div className="flex items-center justify-around">
+        {navItems.map(item => {
+          if (item.isAction) {
+            return (
+              <button
+                key="preserve-floating"
+                type="button"
+                onClick={() => openPreserveModal('story')}
+                className="-mt-5 w-12 h-12 rounded-full bg-gradient-to-tr from-[#C85A32] to-[#E5B842] flex items-center justify-center text-[#FBF9F5] shadow-lg shadow-[#C85A32]/40 active:scale-95 transition-transform border-2 border-[#0C0D14]"
+                aria-label="Preserve Heritage"
+              >
+                <Plus className="w-6 h-6 stroke-[2.5]" />
+              </button>
+            );
+          }
 
-        <button
-          onClick={() => scrollTo('explore')}
-          className="flex flex-col items-center gap-1 p-1 text-gray-300 hover:text-amber-400 active:scale-95 transition-all cursor-pointer"
-        >
-          <Compass className="w-5 h-5" />
-          <span className="text-[10px] font-semibold">Explore</span>
-        </button>
-
-        {/* Highlighted Central AR Button */}
-        <button
-          onClick={() => {
-            triggerHaptic('success');
-            soundEngine.playTempleBell(659, 1.8);
-            onOpenAR();
-          }}
-          className="flex flex-col items-center -mt-5 group cursor-pointer"
-        >
-          <div className="w-13 h-13 rounded-full bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-400 flex items-center justify-center text-black shadow-xl shadow-amber-500/40 border-2 border-amber-300 transform group-active:scale-90 transition-all">
-            <Camera className="w-6 h-6" />
-          </div>
-          <span className="text-[10px] font-bold text-amber-400 mt-1">Smarak AR</span>
-        </button>
-
-        <button
-          onClick={() => scrollTo('creatures')}
-          className="flex flex-col items-center gap-1 p-1 text-gray-300 hover:text-amber-400 active:scale-95 transition-all cursor-pointer"
-        >
-          <Sparkles className="w-5 h-5" />
-          <span className="text-[10px] font-semibold">Creatures</span>
-        </button>
-
-        <button
-          onClick={() => scrollTo('passport')}
-          className="flex flex-col items-center gap-1 p-1 text-gray-300 hover:text-amber-400 active:scale-95 transition-all cursor-pointer"
-        >
-          <Award className="w-5 h-5" />
-          <span className="text-[10px] font-semibold">Passport</span>
-        </button>
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg transition-colors ${
+                isActive ? 'text-[#E5B842]' : 'text-[#8E92A4] hover:text-[#C5C8D4]'
+              }`}
+            >
+              <item.icon className="w-5 h-5 mb-0.5" />
+              <span className="text-[10px] font-medium tracking-tight">{item.label}</span>
+            </Link>
+          );
+        })}
       </div>
-    </nav>
+    </div>
   );
 };
