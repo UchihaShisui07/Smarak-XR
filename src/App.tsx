@@ -20,6 +20,7 @@ import { AIStorytellerPage } from './pages/AIStorytellerPage';
 import { StoriesPage } from './pages/StoriesPage';
 import { CommunityPage } from './pages/CommunityPage';
 import { ProfileDashboardPage } from './pages/ProfileDashboardPage';
+import { MonumentsARPage } from './pages/MonumentsARPage';
 
 // Scroll to top component on route change
 function ScrollToTop() {
@@ -43,6 +44,7 @@ export function App() {
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/monuments" element={<MonumentsARPage />} />
               <Route path="/discover" element={<DiscoverPage />} />
               <Route path="/time-machine" element={<TimeMachinePage />} />
               <Route path="/vanishing" element={<VanishingCulturePage />} />

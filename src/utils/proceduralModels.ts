@@ -977,6 +977,145 @@ export class ProceduralModelBuilder {
     return group;
   }
 
+  public static buildCapitolComplex(opts: ModelBuildOptions = {}): THREE.Group {
+    const group = new THREE.Group();
+    const concreteMat = this.getMaterial(0x94a3b8, opts);
+    const darkConcreteMat = this.getMaterial(0x475569, opts);
+    const metalMat = this.getMaterial(0xd4d4d8, opts);
+    const waterMat = this.getMaterial(0x0284c7, opts, 0x075985);
+
+    // 1. Broad Concrete Esplanade
+    const esplanade = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.25, 7.0), concreteMat);
+    esplanade.position.y = 0.125;
+    group.add(esplanade);
+
+    // 2. Reflecting Pool
+    const pool = new THREE.Mesh(new THREE.BoxGeometry(4.0, 0.1, 2.5), waterMat);
+    pool.position.set(0, 0.3, 1.8);
+    group.add(pool);
+
+    // 3. Palace of Assembly Main Block
+    const assemblyBlock = new THREE.Mesh(new THREE.BoxGeometry(4.5, 1.8, 3.2), concreteMat);
+    assemblyBlock.position.set(-1.2, 1.15, -0.8);
+    group.add(assemblyBlock);
+
+    // 4. Brise-Soleil Concrete Louver Facade
+    for (let i = -4; i <= 4; i++) {
+      const louver = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.6, 0.4), darkConcreteMat);
+      louver.position.set(-1.2 + i * 0.45, 1.15, 0.85);
+      group.add(louver);
+    }
+
+    // 5. Hyperbolic Acoustic Cooling Tower Roof
+    const hyperbolicCurve = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.7, 1.2, 1.8, 24, 1, true),
+      concreteMat
+    );
+    hyperbolicCurve.position.set(-1.2, 2.7, -0.8);
+    group.add(hyperbolicCurve);
+
+    // 6. Pyramidal Skylight Dome
+    const skylight = new THREE.Mesh(new THREE.ConeGeometry(0.9, 1.2, 4), darkConcreteMat);
+    skylight.position.set(0.5, 2.5, -0.8);
+    skylight.rotation.y = Math.PI / 4;
+    group.add(skylight);
+
+    // 7. The Open Hand Monument Platform & Column
+    const handPlinth = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 0.8, 16), darkConcreteMat);
+    handPlinth.position.set(2.8, 0.65, 0.5);
+    group.add(handPlinth);
+
+    const handShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 2.2, 12), metalMat);
+    handShaft.position.set(2.8, 2.1, 0.5);
+    group.add(handShaft);
+
+    // Open Hand Rotating Wind-Vane Silhouette
+    const handGroup = new THREE.Group();
+    handGroup.position.set(2.8, 3.3, 0.5);
+
+    // Palm
+    const palm = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.7, 0.08), metalMat);
+    handGroup.add(palm);
+
+    // Fingers
+    for (let f = -2; f <= 2; f++) {
+      const fingerLen = f === 0 ? 0.9 : Math.abs(f) === 1 ? 0.75 : 0.6;
+      const finger = new THREE.Mesh(new THREE.BoxGeometry(0.14, fingerLen, 0.08), metalMat);
+      finger.position.set(f * 0.16, 0.35 + fingerLen / 2, 0);
+      handGroup.add(finger);
+    }
+    group.add(handGroup);
+
+    return group;
+  }
+
+  public static buildRockGarden(opts: ModelBuildOptions = {}): THREE.Group {
+    const group = new THREE.Group();
+    const stoneMat = this.getMaterial(0x78716c, opts);
+    const darkStoneMat = this.getMaterial(0x44403c, opts);
+    const mosaicMat = this.getMaterial(0xd97706, opts, 0x78350f);
+    const waterMat = this.getMaterial(0x0284c7, opts, 0x0369a1);
+
+    // 1. Terraced Labyrinth Base
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.8, 0.4, 18), darkStoneMat);
+    base.position.y = 0.2;
+    group.add(base);
+
+    // 2. Curving Meandering Stone Walls
+    const wallCurves = [
+      { r: 3.2, start: 0, end: Math.PI * 1.2, h: 1.6, y: 1.0 },
+      { r: 2.2, start: Math.PI * 0.8, end: Math.PI * 1.9, h: 2.1, y: 1.25 },
+      { r: 1.2, start: Math.PI * 0.2, end: Math.PI * 1.4, h: 2.5, y: 1.45 },
+    ];
+
+    wallCurves.forEach(w => {
+      const wall = new THREE.Mesh(
+        new THREE.CylinderGeometry(w.r, w.r, w.h, 24, 1, true, w.start, w.end - w.start),
+        stoneMat
+      );
+      wall.position.y = w.y;
+      group.add(wall);
+    });
+
+    // 3. Multi-Tiered Recycled Waterfall Canyon
+    for (let t = 0; t < 3; t++) {
+      const step = new THREE.Mesh(new THREE.BoxGeometry(2.0 - t * 0.4, 0.3, 0.8), darkStoneMat);
+      step.position.set(-1.8, 0.4 + t * 0.5, 0.8 - t * 0.3);
+      group.add(step);
+
+      const cascade = new THREE.Mesh(new THREE.PlaneGeometry(1.6 - t * 0.4, 0.5), waterMat);
+      cascade.position.set(-1.8, 0.3 + t * 0.5, 1.2 - t * 0.3);
+      cascade.rotation.x = Math.PI / 3;
+      group.add(cascade);
+    }
+
+    // 4. Broken Bangle Folk Statues (Miniature Dancers & Courtiers)
+    for (let i = 0; i < 14; i++) {
+      const angle = (i / 14) * Math.PI * 1.6 + 0.3;
+      const radius = 2.6 + (i % 2) * 0.4;
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+
+      const figure = new THREE.Group();
+      figure.position.set(x, 0.4, z);
+
+      // Body (bangle cylinder)
+      const bodyColor = i % 3 === 0 ? 0xef4444 : i % 3 === 1 ? 0x10b981 : 0xf59e0b;
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, 0.7, 8), this.getMaterial(bodyColor, opts));
+      body.position.y = 0.35;
+      figure.add(body);
+
+      // Head (ceramic sphere)
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), mosaicMat);
+      head.position.y = 0.8;
+      figure.add(head);
+
+      group.add(figure);
+    }
+
+    return group;
+  }
+
   /**
    * Universal factory to build any monument by ID
    */
@@ -998,6 +1137,10 @@ export class ProceduralModelBuilder {
         return this.buildQutubMinar(opts);
       case 'brihadisvara':
         return this.buildBrihadisvara(opts);
+      case 'capitol-complex':
+        return this.buildCapitolComplex(opts);
+      case 'rock-garden':
+        return this.buildRockGarden(opts);
       default:
         return this.buildTajMahal(opts);
     }

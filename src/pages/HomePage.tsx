@@ -16,6 +16,8 @@ import { useHeritage } from '../context/HeritageContext';
 import { VANISHING_CULTURE_ITEMS } from '../data/vanishingCulture';
 import { ADOPTABLE_HERITAGE_LIST } from '../data/adoptionData';
 import { PLATFORM_STATS } from '../data/communityData';
+import { WhySmarakVsGoogleSection } from '../components/WhySmarakVsGoogleSection';
+import { CityHeritageLens } from '../components/CityHeritageLens';
 
 export const HomePage: React.FC = () => {
   const {
@@ -141,7 +143,10 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* 2. FLAGSHIP SECTION: "Before It Becomes a Memory" */}
+      {/* 2. THE MENTOR PITCH: WHY SMARAK AR VS GOOGLE & YOUTUBE */}
+      <WhySmarakVsGoogleSection />
+
+      {/* 3. FLAGSHIP SECTION: "Before It Becomes a Memory" */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
@@ -351,7 +356,10 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* 4. ADOPT A DISAPPEARING HERITAGE TEASER */}
+      {/* 4. MENTOR COUNTER: CITY HERITAGE LENS (CHANDIGARH SPOTLIGHT) */}
+      <CityHeritageLens />
+
+      {/* 5. ADOPT A DISAPPEARING HERITAGE TEASER */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-10 space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1A3026] border border-[#2D6A4F] text-[#64D2B1] text-xs font-semibold uppercase tracking-wider">

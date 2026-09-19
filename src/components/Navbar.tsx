@@ -13,7 +13,8 @@ import {
   Award,
   Menu,
   X,
-  Sparkles
+  Sparkles,
+  Camera
 } from 'lucide-react';
 import { useHeritage } from '../context/HeritageContext';
 
@@ -32,13 +33,14 @@ export const Navbar: React.FC = () => {
 
   const navLinks = [
     { path: '/', label: 'Home', icon: Sparkles },
+    { path: '/monuments', label: '3D & AR', icon: Camera, badge: 'Spatial' },
     { path: '/discover', label: 'Discover', icon: Compass },
     { path: '/time-machine', label: 'Time Machine', icon: Clock },
-    { path: '/vanishing', label: 'Vanishing Culture', icon: AlertTriangle, badge: 'Endangered' },
-    { path: '/adopt', label: 'Adopt Heritage', icon: HeartHandshake },
-    { path: '/ai-storyteller', label: 'Talk to Heritage', icon: Bot, badge: 'AI' },
-    { path: '/stories', label: 'Living Stories', icon: BookOpen },
-    { path: '/community', label: 'Community', icon: Users }
+    { path: '/vanishing', label: 'Vanishing', icon: AlertTriangle, badge: 'Endangered' },
+    { path: '/adopt', label: 'Adopt', icon: HeartHandshake },
+    { path: '/ai-storyteller', label: 'Ask AI', icon: Bot, badge: 'AI' },
+    { path: '/stories', label: 'Stories', icon: BookOpen },
+    { path: '/community', label: 'Guilds', icon: Users }
   ];
 
   const languages = ['EN', 'हिन्दी', 'ਪੰਜਾਬੀ', 'தமிழ்', 'বাংলা', 'मराठी'];
@@ -55,20 +57,20 @@ export const Navbar: React.FC = () => {
           >
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#C85A32] via-[#D4AF37] to-[#1A3026] p-[2px] shadow-lg shadow-[#C85A32]/20 group-hover:scale-105 transition-transform">
               <div className="w-full h-full bg-[#0C0D14] rounded-[10px] flex items-center justify-center">
-                <span className="text-xl">🪔</span>
+                <span className="text-xl">🛕</span>
               </div>
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-serif text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-[#FBF9F5] via-[#E5B842] to-[#FBF9F5]">
-                  Heritage Alive
+                  Smarak AR
                 </span>
                 <span className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] uppercase font-bold tracking-widest bg-[#C85A32]/20 text-[#E5B842] border border-[#C85A32]/40 rounded">
-                  2.0
+                  XR 2.0
                 </span>
               </div>
               <p className="text-[11px] text-[#A3A8B8] tracking-wider hidden md:block">
-                Preserve • Experience • Pass It On
+                Spatial Heritage • Preserve • Pass It On
               </p>
             </div>
           </Link>
