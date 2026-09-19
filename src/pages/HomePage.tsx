@@ -10,14 +10,33 @@ import {
   ShieldCheck,
   PlusCircle,
   ChevronRight,
-  Flame
+  Sparkles,
+  MapPin,
+  Camera,
+  Compass,
+  Smartphone
 } from 'lucide-react';
 import { useHeritage } from '../context/HeritageContext';
+import { MONUMENTS } from '../data/monuments';
+import { SACRED_CREATURES } from '../data/creatures';
 import { VANISHING_CULTURE_ITEMS } from '../data/vanishingCulture';
 import { ADOPTABLE_HERITAGE_LIST } from '../data/adoptionData';
-import { PLATFORM_STATS } from '../data/communityData';
+import type { Monument, SacredCreature } from '../types';
+import { soundEngine } from '../services/soundEngine';
+import { triggerHaptic } from '../utils/haptics';
+
+// Visual & Spatial Components
+import { HeroSection } from '../components/HeroSection';
 import { WhySmarakVsGoogleSection } from '../components/WhySmarakVsGoogleSection';
+import { Monument3DViewer } from '../components/Monument3DViewer';
+import { TimeMachineSlider } from '../components/TimeMachineSlider';
 import { CityHeritageLens } from '../components/CityHeritageLens';
+import { MonumentsExplorer } from '../components/MonumentsExplorer';
+import { CreatureLoreSection } from '../components/CreatureLoreSection';
+import { HeritagePassport } from '../components/HeritagePassport';
+import { CameraARViewer } from '../components/CameraARViewer';
+import { VR360Tour } from '../components/VR360Tour';
+import { ModelViewerWebXR } from '../components/ModelViewerWebXR';
 
 export const HomePage: React.FC = () => {
   const {
@@ -25,8 +44,65 @@ export const HomePage: React.FC = () => {
     openVanishingModal,
     playSimulatedAudio,
     toggleAdoptHeritage,
-    isHeritageAdopted
+    isHeritageAdopted,
+    addPoints,
+    showToast
   } = useHeritage();
+
+  // Spatial & Interactive State
+  const [selectedMonument, setSelectedMonument] = useState<Monument>(
+    MONUMENTS.find(m => m.id === 'capitol-complex') || MONUMENTS[0]
+  );
+  const [isAROpen, setIsAROpen] = useState(false);
+  const [isVROpen, setIsVROpen] = useState(false);
+  const [isWebXROpen, setIsWebXROpen] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+
+  // Digital Passport Gamified Badges
+  const [unlockedBadges, setUnlockedBadges] = useState<string[]>(() => {
+    const saved = localStorage.getItem('smarak_unlocked_badges');
+    return saved ? JSON.parse(saved) : ['creatures', 'taj', 'capitol-complex'];
+  });
+
+  const handleUnlockBadge = (badgeTitle: string) => {
+    if (!unlockedBadges.includes(badgeTitle)) {
+      const updated = [...unlockedBadges, badgeTitle];
+      setUnlockedBadges(updated);
+      localStorage.setItem('smarak_unlocked_badges', JSON.stringify(updated));
+      addPoints(50, `Unlocked Badge: ${badgeTitle}`);
+      showToast(`Badge Unlocked: ${badgeTitle}! (+50 PTS)`, 'points');
+    }
+  };
+
+  const handleToggleAudio = () => {
+    triggerHaptic('tap');
+    const nowPlaying = soundEngine.toggleDrone();
+    setIsAudioPlaying(nowPlaying);
+    if (nowPlaying) {
+      showToast('Tanpura classical drone playing', 'info');
+    } else {
+      showToast('Soundscape muted', 'info');
+    }
+  };
+
+  const handleSelectMonument = (monument: Monument) => {
+    triggerHaptic('tap');
+    soundEngine.playTempleBell(523.25, 2.0);
+    setSelectedMonument(monument);
+    addPoints(10, `Explored ${monument.name} 3D model`);
+    const sanctumEl = document.getElementById('sanctum');
+    if (sanctumEl) {
+      sanctumEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleOpenARWithCreature = (creature: SacredCreature) => {
+    triggerHaptic('success');
+    soundEngine.playTempleBell(659, 2.5);
+    setIsAROpen(true);
+    addPoints(20, `Spawned ${creature.name} in AR`);
+    showToast(`AR Mode active for ${creature.name}! Point camera at flat surface.`, 'info');
+  };
 
   const [activeEraTab, setActiveEraTab] = useState<'1950' | '2026' | '2050'>('1950');
 
@@ -55,96 +131,229 @@ export const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-20 pb-16">
-      {/* 1. HERO SECTION: Ancient Culture x Futuristic Technology */}
-      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-[#D4AF37]/20 bg-gradient-to-b from-[#0C0D14] via-[#0F111A] to-[#0C0D14] px-4 sm:px-6 lg:px-8">
-        {/* Ambient Glows */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-[#C85A32]/15 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-10 right-10 w-[400px] h-[300px] bg-[#D4AF37]/10 rounded-full blur-[100px] pointer-events-none" />
+    <div className="space-y-24 pb-20 overflow-x-hidden">
+      {/* 1. HERO SECTION: Mandalas, Classical Soundscape, & Quick AR Triggers */}
+      <HeroSection
+        onStartAR={() => {
+          triggerHaptic('success');
+          setIsAROpen(true);
+          addPoints(25, 'Launched Mobile Camera AR');
+          showToast('Camera AR Launched! Point camera at flat surface.', 'info');
+        }}
+        onExploreClick={() => {
+          document.getElementById('explore')?.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onCreaturesClick={() => {
+          document.getElementById('creatures')?.scrollIntoView({ behavior: 'smooth' });
+        }}
+        isAudioPlaying={isAudioPlaying}
+        onToggleAudio={handleToggleAudio}
+      />
 
-        {/* Hero Content */}
-        <div className="max-w-5xl mx-auto text-center relative z-10 py-16 space-y-8">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#181B2A]/90 border border-[#D4AF37]/40 text-[#E5B842] text-xs font-semibold tracking-wider uppercase shadow-lg shadow-[#D4AF37]/10">
-            <Flame className="w-4 h-4 text-[#C85A32] fill-current" />
-            <span>Preserve • Experience • Pass It On</span>
+      {/* 2. THE MENTOR PITCH: WHY SMARAK AR VS GOOGLE & YOUTUBE */}
+      <WhySmarakVsGoogleSection />
+
+      {/* 3. 3D SANCTUM & SPATIAL ARCHITECTURAL RECONSTRUCTION */}
+      <section id="sanctum" className="w-full py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 scroll-mt-24">
+        {/* Section Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-semibold uppercase tracking-wider mb-3 shadow-lg shadow-amber-500/10">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>3D Sanctum & Spatial Architectural Holograms</span>
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-cinzel font-black text-white">
+              {selectedMonument.name} <span className="text-amber-400 font-yatra">({selectedMonument.hindiName})</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-amber-200/70 font-outfit mt-1">
+              {selectedMonument.location} • {selectedMonument.period} • {selectedMonument.dynasty}
+            </p>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-serif font-bold tracking-tight text-[#FBF9F5] leading-[1.15]">
-            We Don’t Just Show Culture.
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#FF8C66] to-[#E5B842]">
-              We Keep It Alive.
-            </span>
-          </h1>
-
-          <p className="max-w-2xl mx-auto text-base sm:text-lg text-[#C5C8D4] leading-relaxed">
-            India’s disappearing crafts, forgotten melodies, and generational grandmother recipes are vanishing in silence. Step into the living memory vault, travel through 100 years of culture, and adopt a tradition today.
-          </p>
-
-          {/* Hero Action Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+          {/* Action Buttons: Native Floor AR, Camera AR, 360 VR */}
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
-              onClick={() => openPreserveModal('story')}
-              className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#C85A32] via-[#E5B842] to-[#C85A32] text-[#0C0D14] font-bold text-sm shadow-xl shadow-[#C85A32]/30 hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 border border-[#FF8C66]/50"
+              onClick={() => {
+                triggerHaptic('success');
+                setIsWebXROpen(true);
+              }}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black text-xs font-bold shadow-lg shadow-amber-500/25 transition-all cursor-pointer transform hover:scale-105 active:scale-95"
             >
-              <PlusCircle className="w-5 h-5" />
-              <span>Preserve a Heritage Memory (+100 PTS)</span>
+              <Smartphone className="w-4 h-4" />
+              <span>Native Floor AR</span>
             </button>
 
-            <Link
-              to="/time-machine"
-              className="px-6 py-3.5 rounded-xl bg-[#12141F] hover:bg-[#181B2A] text-[#FBF9F5] font-semibold text-sm border border-[#D4AF37]/40 hover:border-[#D4AF37] transition-all flex items-center gap-2 shadow-lg"
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('tap');
+                setIsAROpen(true);
+              }}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-black/60 hover:bg-black/90 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-all cursor-pointer backdrop-blur-md transform hover:scale-105 active:scale-95"
             >
-              <Clock className="w-4 h-4 text-[#E5B842]" />
-              <span>Launch Cultural Time Machine</span>
-              <ArrowRight className="w-4 h-4 text-[#E5B842]" />
-            </Link>
+              <Camera className="w-4 h-4" />
+              <span>Camera AR</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('tap');
+                setIsVROpen(true);
+              }}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-400/40 text-amber-300 text-xs font-semibold transition-all cursor-pointer backdrop-blur-md transform hover:scale-105 active:scale-95"
+            >
+              <Compass className="w-4 h-4 text-amber-400" />
+              <span>360° VR</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Monument Carousel Chips */}
+        <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-none">
+          {MONUMENTS.map((m) => {
+            const isSelected = selectedMonument.id === m.id;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => handleSelectMonument(m)}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+                  isSelected
+                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30 font-bold scale-105'
+                    : 'bg-[#12141F] text-[#C5C8D4] hover:text-white border border-white/10 hover:border-amber-500/40'
+                }`}
+              >
+                <span>{m.name}</span>
+                {m.unesco && (
+                  <span className={`text-[9px] px-1 py-0.2 rounded font-mono font-bold uppercase ${
+                    isSelected ? 'bg-black text-amber-300' : 'bg-blue-500/20 text-blue-300'
+                  }`}>
+                    UNESCO
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 3D WebGL Canvas with Lighting, Hotspots, & Voice Guide */}
+        <div className="rounded-3xl bg-[#0B0C13] border-2 border-amber-500/30 shadow-2xl overflow-hidden">
+          <Monument3DViewer
+            monument={selectedMonument}
+            onOpenAR={() => setIsAROpen(true)}
+            onOpenVR={() => setIsVROpen(true)}
+          />
+        </div>
+
+        {/* Architectural Dossier & Kala-Chakra Time Machine */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left: History & On-Site Guidelines */}
+          <div className="lg:col-span-6 flex flex-col gap-6">
+            <div className="p-6 sm:p-8 rounded-3xl glass-royal border border-amber-500/30 shadow-2xl">
+              <h3 className="font-cinzel font-bold text-xl text-white mb-3">
+                Architectural Genesis & Sacred Lore
+              </h3>
+              <p className="text-sm text-amber-100/90 leading-relaxed font-outfit mb-5">
+                {selectedMonument.fullHistory}
+              </p>
+
+              <div className="space-y-3 pt-4 border-t border-white/10 text-xs">
+                <div className="flex items-start gap-2">
+                  <span className="font-bold text-amber-400">Architectural Style:</span>
+                  <span className="text-gray-300">{selectedMonument.architecturalStyle}</span>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <span className="font-bold text-amber-400">Associated Sacred Motifs:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedMonument.featuredCreatures.length > 0 ? (
+                      selectedMonument.featuredCreatures.map((cid) => {
+                        const c = SACRED_CREATURES.find((item) => item.id === cid);
+                        return (
+                          <span
+                            key={cid}
+                            className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 text-[11px] font-semibold"
+                          >
+                            ✨ {c ? c.name : cid}
+                          </span>
+                        );
+                      })
+                    ) : (
+                      <span className="text-gray-400">Geometric, Acoustic & Concrete Epigraphy</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Practical Visiting & On-Site Guidelines */}
+            <div className="p-6 rounded-3xl glass-royal border border-amber-500/30 shadow-2xl">
+              <h4 className="font-cinzel font-bold text-lg text-white mb-4 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-amber-400" />
+                <span>On-Site Visitor Guidelines & Archeo-Acoustics</span>
+              </h4>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="p-3 rounded-2xl bg-black/40 border border-white/10">
+                  <span className="font-bold text-amber-300 block mb-1">🌅 Best Light Hour:</span>
+                  <span className="text-amber-100/80">{selectedMonument.visitTips.bestTime}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-black/40 border border-white/10">
+                  <span className="font-bold text-orange-300 block mb-1">🕯️ Aarti / Acoustic Echo:</span>
+                  <span className="text-amber-100/80">{selectedMonument.visitTips.aartiHours}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-black/40 border border-white/10">
+                  <span className="font-bold text-emerald-300 block mb-1">📸 Photo Spots & Louvers:</span>
+                  <span className="text-amber-100/80">{selectedMonument.visitTips.photography}</span>
+                </div>
+                <div className="p-3 rounded-2xl bg-black/40 border border-white/10">
+                  <span className="font-bold text-cyan-300 block mb-1">🥻 Cultural Etiquette:</span>
+                  <span className="text-amber-100/80">{selectedMonument.visitTips.dressCode}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Live Platform Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 border-t border-white/10 max-w-4xl mx-auto">
-            <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-              <div className="text-2xl sm:text-3xl font-serif font-bold text-[#E5B842]">
-                {PLATFORM_STATS.traditionsCataloged}+
-              </div>
-              <div className="text-[11px] uppercase tracking-wider text-[#A3A8B8] mt-0.5">
-                Living Traditions Mapped
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-              <div className="text-2xl sm:text-3xl font-serif font-bold text-rose-400">
-                {PLATFORM_STATS.endangeredMonitored}
-              </div>
-              <div className="text-[11px] uppercase tracking-wider text-[#A3A8B8] mt-0.5">
-                Endangered Registry
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-              <div className="text-2xl sm:text-3xl font-serif font-bold text-[#64D2B1]">
-                {PLATFORM_STATS.eldersVoicesRecorded}+
-              </div>
-              <div className="text-[11px] uppercase tracking-wider text-[#A3A8B8] mt-0.5">
-                Voices & Oral Songs
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-              <div className="text-2xl sm:text-3xl font-serif font-bold text-[#FBF9F5]">
-                {PLATFORM_STATS.activeGuardians.toLocaleString()}+
-              </div>
-              <div className="text-[11px] uppercase tracking-wider text-[#A3A8B8] mt-0.5">
-                Culture Guardians
-              </div>
-            </div>
+          {/* Right: Kala-Chakra Time Machine Slider */}
+          <div className="lg:col-span-6">
+            <TimeMachineSlider monument={selectedMonument} />
           </div>
         </div>
       </section>
 
-      {/* 2. THE MENTOR PITCH: WHY SMARAK AR VS GOOGLE & YOUTUBE */}
-      <WhySmarakVsGoogleSection />
+      {/* 4. MENTOR COUNTER: CITY HERITAGE LENS (CHANDIGARH SPOTLIGHT) */}
+      <CityHeritageLens />
+
+      {/* 5. GRAND ARCHIVES: EXPLORE TIMELESS MONUMENTS */}
+      <div id="explore" className="scroll-mt-24">
+        <MonumentsExplorer
+          selectedMonument={selectedMonument}
+          onSelectMonument={handleSelectMonument}
+          onOpenAR={(m) => {
+            setSelectedMonument(m);
+            setIsAROpen(true);
+          }}
+          onOpenVR={(m) => {
+            setSelectedMonument(m);
+            setIsVROpen(true);
+          }}
+        />
+      </div>
+
+      {/* 6. SACRED CREATURES LORE & BESTIARY */}
+      <div id="creatures" className="scroll-mt-24">
+        <CreatureLoreSection
+          onOpenARWithCreature={handleOpenARWithCreature}
+          onClaimBadge={handleUnlockBadge}
+        />
+      </div>
+
+      {/* 7. SMARAK AR DIGITAL PASSPORT */}
+      <div id="passport" className="scroll-mt-24">
+        <HeritagePassport unlockedBadges={unlockedBadges} />
+      </div>
 
       {/* 3. FLAGSHIP SECTION: "Before It Becomes a Memory" */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -356,9 +565,6 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* 4. MENTOR COUNTER: CITY HERITAGE LENS (CHANDIGARH SPOTLIGHT) */}
-      <CityHeritageLens />
-
       {/* 5. ADOPT A DISAPPEARING HERITAGE TEASER */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-10 space-y-3">
@@ -534,6 +740,39 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* MODALS: AR Camera Overlay */}
+      {isAROpen && (
+        <CameraARViewer
+          monument={selectedMonument}
+          onClose={() => setIsAROpen(false)}
+          onUnlockBadge={handleUnlockBadge}
+          onOpenNativeAR={() => {
+            setIsAROpen(false);
+            setIsWebXROpen(true);
+          }}
+        />
+      )}
+
+      {/* MODALS: 360 VR Photosphere Tour */}
+      {isVROpen && (
+        <VR360Tour
+          monument={selectedMonument}
+          onClose={() => setIsVROpen(false)}
+        />
+      )}
+
+      {/* MODALS: Phone Native WebXR & Scene Viewer Quick Look */}
+      {isWebXROpen && (
+        <ModelViewerWebXR
+          monument={selectedMonument}
+          onClose={() => setIsWebXROpen(false)}
+          onSwitchToCameraAR={() => {
+            setIsWebXROpen(false);
+            setIsAROpen(true);
+          }}
+        />
+      )}
     </div>
   );
 };
